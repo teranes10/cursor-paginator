@@ -1,0 +1,79 @@
+## .gitignore for .NET / C# projects
+
+# Build output
+[Bb]in/
+[Oo]bj/
+out/
+[Ll]og/
+[Ll]ogs/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+!**/packages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+# Visual Studio
+.vs/
+*.vsp
+*.vspx
+*.vsx
+*.vspscc
+*.vssscc
+
+# JetBrains Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+*.resharper
+
+# MonoDevelop / Xamarin Studio
+*.pidb
+*.userprefs
+*.usertasks
+
+# Publish artifacts
+publish/
+**/publish/
+
+# MSBuild
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+TestResult.xml
+
+# .NET Core
+*.runtimeconfig.json
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Azure / Cloud
+.azure/
+
+# Secrets & environment
+*.env
+appsettings.Development.json
+secrets.json

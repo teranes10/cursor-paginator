@@ -1,0 +1,78 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # triggers on version tags like v1.0.0, v1.2.3
+
+jobs:
+  publish:
+    name: Build & Publish NuGet Packages
+    runs-on: ubuntu-latest
+    environment: publish
+    permissions:
+      id-token: write  # Required for NuGet OIDC Trusted Publishing
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore CursorPaginator.sln
+
+      - name: Build
+        run: dotnet build CursorPaginator.sln --configuration Release --no-restore
+
+      - name: Pack CursorPaginator
+        run: |
+          dotnet pack CursorPaginator/CursorPaginator.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack CursorPaginator.Generator
+        run: |
+          dotnet pack CursorPaginator.Generator/CursorPaginator.Generator.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }} \
+            -p:CursorPaginatorVersion=${{ steps.version.outputs.VERSION }}
+
+      - name: NuGet Login (OIDC Trusted Publishing)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: TeranesRanjith
+
+      - name: Push to NuGet.org
+        run: |
+          dotnet nuget push ./nupkgs/*.nupkg \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY || secrets.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Push symbols to NuGet.org
+        run: |
+          dotnet nuget push ./nupkgs/*.snupkg \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY || secrets.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        continue-on-error: true
+
+      - name: Upload packages as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./nupkgs/
