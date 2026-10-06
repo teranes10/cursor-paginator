@@ -4,8 +4,10 @@ namespace CursorPaginator.Generator.Generators;
 
 internal class Helpers
 {
-    public static string GetBinaryReadMethod(string baseType)
+    public static string GetBinaryReadMethod(string baseType, bool enumAsString = false)
     {
+        if (enumAsString) return "r.ReadString()";
+
         return baseType switch
         {
             "string" => "r.ReadString()",
@@ -22,8 +24,10 @@ internal class Helpers
         };
     }
 
-    public static string GetBinaryWriteMethod(string baseType)
+    public static string GetBinaryWriteMethod(string baseType, bool enumAsString = false)
     {
+        if (enumAsString) return "w.Write(v.ToString()!)";
+
         return baseType switch
         {
             "string" => "w.Write((string)v)",
@@ -40,8 +44,11 @@ internal class Helpers
         };
     }
 
-    public static string GetArrayWriteMethod(string baseType)
+    public static string GetArrayWriteMethod(string baseType, bool enumAsString = false)
     {
+        if (enumAsString)
+            return @"(w, v) => { var arr = (" + baseType + @"[])v; w.Write(arr.Length); foreach (var e in arr) w.Write(e.ToString()); }";
+
         var elementType = baseType switch
         {
             "string" => "string",

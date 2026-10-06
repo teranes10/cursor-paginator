@@ -51,6 +51,8 @@ internal sealed class EntityInfo
             var excludeFields = generateQueryAttr.GetNamedAttributeValue("Exclude", Array.Empty<string>())!;
             var selectableFields = generateQueryAttr.GetNamedAttributeValue("Selectable", Array.Empty<string>())!;
 
+            var enumsAsStrings = generateQueryAttr.GetNamedAttributeValue("EnumsAsStrings", false);
+
             var queryMapAttrs = typeSymbol.GetAttributes()
                 .Where(attr => attr.AttributeClass?.Name == "QueryMapAttribute")
                 .ToList();
@@ -148,6 +150,12 @@ internal sealed class EntityInfo
 
                 var (fieldType, baseType, _) = PropertyInfo.ResolvePropertyType(propSymbol.Type);
 
+                var enumAsString = fieldType == QueryFieldType.Enum
+                    && (queryMapAttr?.GetNamedAttributeValue<bool?>("EnumAsString")
+                        ?? queryFieldAttr?.GetNamedAttributeValue<bool?>("EnumAsString")
+                        ?? filterQueryFieldAttr?.GetNamedAttributeValue<bool?>("EnumAsString")
+                        ?? enumsAsStrings);
+
                 properties.Add(new PropertyInfo
                 {
                     Name = propSymbol.Name,
@@ -158,7 +166,8 @@ internal sealed class EntityInfo
                     Filterable = isFilterable,
                     Sortable = isSortable,
                     Operators = operators,
-                    FieldType = fieldType
+                    FieldType = fieldType,
+                    EnumAsString = enumAsString
                 });
             }
 
@@ -194,6 +203,11 @@ internal sealed class EntityInfo
 
                 var (fieldType, baseType, typeNameStr) = PropertyInfo.ResolvePropertyType(filterPropSymbol.Type);
 
+                var enumAsString = fieldType == QueryFieldType.Enum
+                    && (queryMapAttr?.GetNamedAttributeValue<bool?>("EnumAsString")
+                        ?? queryFieldAttr?.GetNamedAttributeValue<bool?>("EnumAsString")
+                        ?? enumsAsStrings);
+
                 properties.Add(new PropertyInfo
                 {
                     Name = filterPropSymbol.Name,
@@ -204,7 +218,8 @@ internal sealed class EntityInfo
                     Filterable = isFilterable,
                     Sortable = isSortable,
                     Operators = operators,
-                    FieldType = fieldType
+                    FieldType = fieldType,
+                    EnumAsString = enumAsString
                 });
             }
 

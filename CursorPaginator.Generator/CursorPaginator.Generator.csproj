@@ -14,7 +14,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>CursorPaginator.Generator</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <Authors>teranesranjith</Authors>
     <Company>teranesranjith</Company>
     <Description>Roslyn Source Generator for CursorPaginator — generates strongly-typed SQL queries, binary serialization jump tables, and HMAC-SHA256 signed cursors at compile time for high-performance cursor-based pagination with Dapper.</Description>

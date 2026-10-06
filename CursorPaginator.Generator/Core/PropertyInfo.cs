@@ -12,6 +12,7 @@ internal sealed class PropertyInfo
     public bool Sortable { get; set; }
     public FilterOperator[] Operators { get; init; } = [];
     public QueryFieldType FieldType { get; init; }
+    public bool EnumAsString { get; init; }
 
     public string GetResolvedType()
     {

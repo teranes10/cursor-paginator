@@ -325,7 +325,7 @@ internal class HandlerClassGenerator
         foreach (var field in paramMap.FieldOperators)
         {
             var col = Helpers.QuoteIdentifier(field.ColumnName, config.IdentifierQuote);
-            var readMethod = Helpers.GetBinaryReadMethod(field.BaseType);
+            var readMethod = Helpers.GetBinaryReadMethod(field.BaseType, field.EnumAsString);
             var fieldNameLower = field.PropertyName.Substring(0, 1).ToLower() + field.PropertyName.Substring(1);
 
             sb.AppendLine("        (sql, r, p) => { sql.Append($\"{col} IS NULL\"); r.ReadBoolean(); },".Replace("{col}", col));
@@ -378,7 +378,7 @@ internal class HandlerClassGenerator
 
         foreach (var field in paramMap.FieldOperators)
         {
-            var writeMethod = Helpers.GetBinaryWriteMethod(field.BaseType);
+            var writeMethod = Helpers.GetBinaryWriteMethod(field.BaseType, field.EnumAsString);
 
             sb.AppendLine("        (w, v) => w.Write((bool)v),");
             sb.AppendLine("        (w, v) => w.Write((bool)v),");
@@ -402,7 +402,7 @@ internal class HandlerClassGenerator
 
             if (field.FieldType != QueryFieldType.Boolean)
             {
-                var arrayWriteMethod = Helpers.GetArrayWriteMethod(field.BaseType);
+                var arrayWriteMethod = Helpers.GetArrayWriteMethod(field.BaseType, field.EnumAsString);
                 sb.AppendLine($"        {arrayWriteMethod},");
                 sb.AppendLine($"        {arrayWriteMethod},");
             }
@@ -414,7 +414,7 @@ internal class HandlerClassGenerator
         // Generate cursor jump table
         var idProp = entityInfo.SortableProperties.First(p => p.Name == entityInfo.IdentifierProperty.Name);
         var idCol = Helpers.QuoteIdentifier(idProp.GetFullColumnName(), config.IdentifierQuote);
-        var idReadMethod = Helpers.GetBinaryReadMethod(idProp.BaseType);
+        var idReadMethod = Helpers.GetBinaryReadMethod(idProp.BaseType, idProp.EnumAsString);
         var otherSortables = entityInfo.SortableProperties.Where(p => p.Name != entityInfo.IdentifierProperty.Name).ToList();
 
         sb.AppendLine("    private static readonly Action<StringBuilder, BinaryReader, Dictionary<string, object>>[] CursorJumpTable =");
@@ -430,7 +430,7 @@ internal class HandlerClassGenerator
         foreach (var prop in otherSortables)
         {
             var col = Helpers.QuoteIdentifier(prop.GetFullColumnName(), config.IdentifierQuote);
-            var readMethod = Helpers.GetBinaryReadMethod(prop.BaseType);
+            var readMethod = Helpers.GetBinaryReadMethod(prop.BaseType, prop.EnumAsString);
 
             sb.Append($"        (sql, r, p) => {{ ");
             sb.Append($"sql.Append(\"({col} > {config.ParameterPrefix}cursor_sort) OR ({col} = {config.ParameterPrefix}cursor_sort AND {idCol} > {config.ParameterPrefix}cursor_id)\");");
@@ -734,6 +734,8 @@ internal class HandlerClassGenerator
             sb.AppendLine($"                writer.Write({valueAccess}.DayNumber);");
         else if (prop.BaseType == "System.Guid")
             sb.AppendLine($"                writer.Write({valueAccess}.ToByteArray());");
+        else if (prop.FieldType == QueryFieldType.Enum && prop.EnumAsString)
+            sb.AppendLine($"                writer.Write(({valueAccess}).ToString());");
         else if (prop.FieldType == QueryFieldType.Enum)
             sb.AppendLine($"                writer.Write((int)({valueAccess}));");
         else if (prop.BaseType == "string" || prop.BaseType == "System.String")

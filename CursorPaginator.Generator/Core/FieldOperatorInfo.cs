@@ -6,6 +6,7 @@ internal class FieldOperatorInfo
     public required string BaseType { get; set; }
     public required QueryFieldType FieldType { get; set; }
     public required string ColumnName { get; set; }
+    public bool EnumAsString { get; set; }
 
     // Lowercase property name for parameter naming
     public string PropertyNameLower => char.ToLowerInvariant(PropertyName[0]) + PropertyName[1..];

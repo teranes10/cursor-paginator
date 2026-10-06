@@ -7,7 +7,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>CursorPaginator</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>teranesranjith</Authors>
     <Company>teranesranjith</Company>
     <Description>A high-performance, source-generated Cursor-Based Pagination and Dynamic Filtering library for .NET and Dapper. Generates strongly-typed SQL queries, binary serialization jump tables, and HMAC-SHA256 signed cursors at compile time via Roslyn Source Generators.</Description>

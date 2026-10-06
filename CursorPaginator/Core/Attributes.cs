@@ -13,6 +13,14 @@ public class GenerateQueryAttribute : Attribute
     public Type Filter { get; set; }
     public Type Response { get; set; }
     public bool HasTenantFilter { get; set; } = false;
+
+    /// <summary>
+    /// Set when enum columns of this query are stored as their names (e.g. EF Core
+    /// <c>HasConversion&lt;string&gt;()</c>) instead of integers. Enum filter values and cursor
+    /// sort values are then bound as strings. Override per property with
+    /// <see cref="QueryFieldAttribute.EnumAsString"/> or <see cref="QueryMapAttribute.EnumAsString"/>.
+    /// </summary>
+    public bool EnumsAsStrings { get; set; } = false;
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
@@ -70,6 +78,7 @@ public class QueryFieldAttribute : Attribute
     public FilterOperator[]? Operators { get; set; }
     public bool? Filterable { get; set; }
     public bool? Sortable { get; set; }
+    public bool EnumAsString { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]
@@ -90,5 +99,6 @@ public class QueryMapAttribute : Attribute
     public bool? Filterable { get; set; }
     public bool? Sortable { get; set; }
     public FilterOperator[]? Operators { get; set; }
+    public bool EnumAsString { get; set; }
     public int Order { get; set; }
 }

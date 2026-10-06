@@ -26,7 +26,8 @@ A high-performance, source-generated **Cursor-Based Pagination & Dynamic Filteri
   - [3. Query with Static Base Filters (`[Where]`)](#3-query-with-static-base-filters-where)
   - [4. Multi-Table Join Query](#4-multi-table-join-query-join-joincondition-joinwhere)
   - [5. Column Mapping & Computed Fields](#5-column-mapping--computed-fields-queryfield-computed)
-  - [6. API Endpoint Pattern](#6-api-endpoint-pattern)
+  - [6. Enums Stored as Strings](#6-enums-stored-as-strings)
+  - [7. API Endpoint Pattern](#7-api-endpoint-pattern)
 - [Architectural Rules & Best Practices](#architectural-rules--best-practices)
 - [Troubleshooting & Pitfalls](#troubleshooting--pitfalls)
 
@@ -95,6 +96,7 @@ public class GenerateQueryAttribute : Attribute
 | `Select` | `string[]?` | `null` | Explicit list of response properties to include in `SELECT`. |
 | `Identifier` | `string` | `"Id"` | Unique tie-breaker field for deterministic pagination. |
 | `HasTenantFilter` | `bool` | `false` | Injects `table.tenant_id = @TenantId` in `WHERE` and count queries. |
+| `EnumsAsStrings` | `bool` | `false` | Enum columns are stored as their names (e.g. EF Core `HasConversion<string>()`). Enum filter values and cursor sort values are bound as strings instead of integers. See [Enums stored as strings](#6-enums-stored-as-strings). |
 | `NamingConvention` | `NamingConvention?` | `SnakeCase` | Column naming convention (`SnakeCase`, `PascalCase`, `CamelCase`). |
 | `DatabaseProvider` | `DatabaseProvider?` | `MySQL` | SQL dialect provider (`MySQL`, `PostgreSQL`). |
 
@@ -242,6 +244,7 @@ public class QueryMapAttribute : Attribute
 | `Filterable` | `bool?` | `null` | Enables/disables filtering for this mapped property. |
 | `Sortable` | `bool?` | `null` | Enables/disables sorting for this mapped property. |
 | `Operators` | `FilterOperator[]?` | `null` | Restricts allowed filter operators. |
+| `EnumAsString` | `bool` | *Inherits `EnumsAsStrings`* | Overrides `EnumsAsStrings` for this enum property. |
 | `Order` | `int` | *Declaration Order* | Optional execution sequence index. |
 
 #### Example
@@ -281,6 +284,7 @@ public class QueryFieldAttribute : Attribute
 | `Filterable` | `bool?` | `null` | Enables/disables dynamic filtering for this field. |
 | `Sortable` | `bool?` | `null` | Enables/disables sorting for this field. |
 | `Operators` | `FilterOperator[]?` | `null` | Restricts allowed filter operators. |
+| `EnumAsString` | `bool` | *Inherits `EnumsAsStrings`* | Overrides `EnumsAsStrings` for this enum property. |
 
 #### Example
 
@@ -522,7 +526,32 @@ public class InvoiceItemResponse
 
 ---
 
-### 6. API Endpoint Pattern
+### 6. Enums Stored as Strings
+
+By default an enum filter value (and an enum sort value in a cursor) is bound as the enum itself, which Dapper sends as its **integer** value. If the column holds the enum's *name* (EF Core `HasConversion<string>()`), that comparison is wrong: MySQL coerces every non-numeric string to `0`, so `Status = 0` matches every row and `Status = 1` matches none.
+
+Keep using `EnumFilter<T>` and opt in with `EnumsAsStrings`; values are then bound as `enum.ToString()`:
+
+```csharp
+[GenerateQuery(
+    Table = "pick_list",
+    EnumsAsStrings = true,          // every enum property of this query
+    Filter = typeof(PickListFilter),
+    Response = typeof(PickListResponse))]
+partial class GetPickListsHandler { }
+```
+
+Mix string- and int-stored enums in one query by overriding per property:
+
+```csharp
+[GenerateQuery(Table = "stock_take", EnumsAsStrings = true, Filter = typeof(StockTakeFilter), Response = typeof(StockTakeResponse))]
+[QueryMap(Property = nameof(StockTakeResponse.Kind), EnumAsString = false)]   // this column is an int
+partial class GetStockTakesHandler { }
+```
+
+`EnumAsString` is also available on `[QueryField]`. Sorting by a string-stored enum column orders alphabetically, as the database does.
+
+### 7. API Endpoint Pattern
 
 Every paginated API exposes two endpoints:
 
@@ -604,7 +633,7 @@ static class CategoryApiEndpoints
   - Use `public class FilterName : ICursorFilter` and `public class ResponseName { }` with `{ get; init; }` properties.
 - **Request DTOs**: Other request DTOs (e.g. `CreateSupplierRequest`) must be **`record`** types.
 - **File Isolation**: Every filter class and response class **must reside in its own separate file** (e.g. `SupplierFilter.cs` and `SupplierResponse.cs`).
-- **Use Enums, Not Strings or Ints**: Always use strongly-typed Enums in responses, requests, and filters (using `EnumFilter<T>`). Global JSON options automatically serialize Enums as strings.
+- **Use Enums, Not Strings or Ints**: Always use strongly-typed Enums in responses, requests, and filters (using `EnumFilter<T>`; set `EnumsAsStrings = true` when the column stores enum names). Global JSON options automatically serialize Enums as strings.
 
 ### 2. File & Class Naming
 

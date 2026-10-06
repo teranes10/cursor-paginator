@@ -17,6 +17,7 @@ internal class ParameterMap
                 PropertyName = prop.Name,
                 BaseType = prop.BaseType,
                 FieldType = prop.FieldType,
+                EnumAsString = prop.EnumAsString,
                 ColumnName = prop.GetFullColumnName(),
                 IsNullTrueId = currentParam++,
                 IsNullFalseId = currentParam++,
